@@ -40,7 +40,12 @@ Function Definitions
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* Public functions                                                                                                   */
 /*--------------------------------------------------------------------------------------------------------------------*/
-
+static void Delay(u8 u8DelayTime)
+{
+  	for(u8 u8a = 0 ; u8a <u8DelayTime ; u8a++ )
+	{	  	
+	}
+}
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* Protected functions                                                                                                */
@@ -58,7 +63,19 @@ Promises:
 */
 void AntttInitialize(void)
 {
-  Anttt_pfnStateMachine = AntttSM_Idle;
+	NRF_SPI0->ENABLE = SPI_ENABLE_ENABLE_Disabled << SPI_ENABLE_ENABLE_Pos;
+	NRF_SPI0->PSELSCK = 11;
+	NRF_SPI0->PSELMISO = 12;
+	NRF_SPI0->PSELMOSI = 13;
+	NRF_SPI0->CONFIG = 0;
+	NRF_SPI0->FREQUENCY = SPI_FREQUENCY_FREQUENCY_K125 << SPI_FREQUENCY_FREQUENCY_Pos;
+	NRF_SPI0->POWER = SPI_POWER_POWER_Disabled << SPI_POWER_POWER_Pos;
+	NRF_SPI0->INTENSET = SPI_INTENSET_READY_Enabled << SPI_INTENSET_READY_Pos;
+	NRF_SPI0->INTENCLR = SPI_INTENCLR_READY_Enabled << SPI_INTENCLR_READY_Pos;
+	
+	NRF_GPIO->OUTCLR = P0_10_SPI_CS;
+	
+    Anttt_pfnStateMachine = AntttSM_Idle;
   
 } /* end AntttInitialize() */
 
@@ -97,7 +114,23 @@ State: AntttSM_Idle
 */
 static void AntttSM_Idle(void)
 {
-    
+  	static bool bStart_Synchronous = 0;
+  
+  	if(NRF_GPIO->IN & 0x00000300 == 0x00000300  )
+	{
+	  	bStart_Synchronous = 1;
+	}
+	
+	if(bStart_Synchronous)
+	{
+	  	NRF_GPIO->OUTSET = P0_10_SPI_CS;
+		
+		Delay(3);
+		
+		NRF_GPIO->OUTCLR = P0_10_SPI_CS;
+		
+		bStart_Synchronous = 0;
+	}    
 } 
 
 
