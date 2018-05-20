@@ -870,7 +870,7 @@ SPI slave mode to communicate with an ANT device.
 */
 
 /* USART Mode Register - page 737 */
-#define ANT_US_MR_INIT (u32)0x004118FF
+#define ANT_US_MR_INIT (u32)0x004018FF
 /*
     31 [0] ONEBIT start frame delimiter is COMMAND or DATA SYNC
     30 [0] MODSYNC Manchester start bit N/A
@@ -890,7 +890,7 @@ SPI slave mode to communicate with an ANT device.
     19 [0] OVER 16x oversampling
     18 [0] CLKO USART does not drive the SCK pin
     17 [0] MODE9 CHRL defines char length
-    16 [1] CPOL clock is high when inactive
+    16 [0] CPOL clock is high when inactive
 
     15 [0] CHMODE normal mode
     14 [0] "

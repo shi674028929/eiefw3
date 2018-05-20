@@ -116,10 +116,10 @@ static void DebugPrintfGrid (void)
 
 static void UserApp1SlaveTxFlowCallback (void)
 {
-//  	for(u16 i=0;i<100;i++)
-//	{
-//	  	for(u16 b=0;b<100;b++);
-//	}
+  	for(u16 i=0;i<100;i++)
+	{
+	  	for(u16 b=0;b<100;b++);
+	}
   	AT91C_BASE_PIOB->PIO_CODR = PB_24_ANT_SRDY;
 }
 
