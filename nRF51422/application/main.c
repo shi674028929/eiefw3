@@ -74,8 +74,9 @@ void main(void)
 
   ANTIntegrationInitialize();
   BLEIntegrationInitialize();
+#if 0
   bleperipheralInitialize();
-  
+#endif
   /* Application initialization */
   AntttInitialize();
   

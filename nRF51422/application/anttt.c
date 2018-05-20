@@ -31,7 +31,10 @@ Variable names shall start with "Anttt_<type>" and be declared as static.
 ***********************************************************************************************************************/
 static fnCode_type Anttt_pfnStateMachine;              /* The application state machine function pointer */
 
-
+u8 au8SpiTxdBuffer[20];
+u8 u8SpiTxcount=0;
+u8 u8SpiTxLength=0;
+bool bSpiTxEn=0;
 
 /**********************************************************************************************************************
 Function Definitions
@@ -63,18 +66,20 @@ Promises:
 */
 void AntttInitialize(void)
 {
-	NRF_SPI0->ENABLE = SPI_ENABLE_ENABLE_Disabled << SPI_ENABLE_ENABLE_Pos;
+	
 	NRF_SPI0->PSELSCK = 11;
 	NRF_SPI0->PSELMISO = 12;
 	NRF_SPI0->PSELMOSI = 13;
-	NRF_SPI0->CONFIG = 0;
-	NRF_SPI0->FREQUENCY = SPI_FREQUENCY_FREQUENCY_K125 << SPI_FREQUENCY_FREQUENCY_Pos;
-	NRF_SPI0->POWER = SPI_POWER_POWER_Disabled << SPI_POWER_POWER_Pos;
-	NRF_SPI0->INTENSET = SPI_INTENSET_READY_Enabled << SPI_INTENSET_READY_Pos;
-	NRF_SPI0->INTENCLR = SPI_INTENCLR_READY_Enabled << SPI_INTENCLR_READY_Pos;
-	
-	NRF_GPIO->OUTCLR = P0_10_SPI_CS;
-	
+	NRF_SPI0->CONFIG = 0x3;
+	NRF_SPI0->FREQUENCY = SPI_FREQUENCY_FREQUENCY_K500 << SPI_FREQUENCY_FREQUENCY_Pos;
+	//NRF_SPI0->POWER = SPI_POWER_POWER_Disabled << SPI_POWER_POWER_Pos;
+//	NRF_SPI0->INTENSET = SPI_INTENSET_READY_Enabled << SPI_INTENSET_READY_Pos;
+//	NRF_SPI0->INTENCLR = SPI_INTENCLR_READY_Enabled << SPI_INTENCLR_READY_Pos;
+		  
+	//NRF_GPIO->OUTCLR = P0_10_SPI_CS;
+	NRF_TWI0->ENABLE = TWI_ENABLE_ENABLE_Disabled << TWI_ENABLE_ENABLE_Pos;
+	NRF_SPI0->ENABLE = SPI_ENABLE_ENABLE_Enabled << SPI_ENABLE_ENABLE_Pos;
+	NRF_SPI0->EVENTS_READY = 0;
     Anttt_pfnStateMachine = AntttSM_Idle;
   
 } /* end AntttInitialize() */
@@ -114,24 +119,104 @@ State: AntttSM_Idle
 */
 static void AntttSM_Idle(void)
 {
-  	static bool bStart_Synchronous = 0;
-  
-  	if(NRF_GPIO->IN & 0x00000300 == 0x00000300  )
-	{
-	  	bStart_Synchronous = 1;
-	}
+  	static bool bRXData = 1;
+	static u16 u16count;
+	static u32 u32byte;
+    if(bSpiTxEn==1){
+	   NRF_GPIO->OUTSET = P0_26_LED_BLU;
+	   NRF_GPIO->OUTCLR = P0_10_SPI_CS;
+	   for(u16 i = 0 ; i <100 ; i++ ){
+		   for(u16 j = 0 ; j <1000 ; j++ );
+	   }
+	   if(NRF_SPI0->EVENTS_READY==1){
+	       	u32byte=NRF_SPI0->RXD;
+			NRF_SPI0->EVENTS_READY=0;
+			
+	   }
+	   if(u8SpiTxcount<u8SpiTxLength){
+		 
+	     // NRF_SPI0->TXD = au8SpiTxdBuffer[u8SpiTxcount];
+		 NRF_SPI0->TXD = 0x00000023;
+		 u8SpiTxcount++;
+	   }else{
+		  u8SpiTxcount=0;
+		  bSpiTxEn=0;
+		  for(u16 i = 0 ; i <50 ; i++ ){
+		   for(u16 j = 0 ; j <100 ; j++ );
+	      }
+		  NRF_GPIO->OUTSET = P0_10_SPI_CS;
+		  NRF_GPIO->OUTCLR = P0_26_LED_BLU;
+	   }
+		  
+		 
+	   
+    }
 	
-	if(bStart_Synchronous)
-	{
-	  	NRF_GPIO->OUTSET = P0_10_SPI_CS;
-		
-		Delay(3);
-		
-		NRF_GPIO->OUTCLR = P0_10_SPI_CS;
-		
-		bStart_Synchronous = 0;
-	}    
-} 
+	
+	if((NRF_GPIO->IN & 0x00000200) == 0x0 ){
+	   for(u16 i = 0 ; i <10 ; i++ ){
+		   for(u16 j = 0 ; j <100 ; j++ );
+	   }
+	   NRF_GPIO->OUTCLR = P0_10_SPI_CS;
+	   for(u16 i = 0 ; i <10 ; i++ ){
+		   for(u16 j = 0 ; j <100 ; j++ );
+	   }
+	   if(NRF_SPI0->EVENTS_READY==1){
+	       	u32byte=NRF_SPI0->RXD;
+			NRF_SPI0->EVENTS_READY=0;
+			
+	   }
+	   NRF_SPI0->TXD = 0x00000000;
+
+	}
+}
+	
+
+//	u16count++;
+//	if(u16count == 100)
+//	{
+//	NRF_SPI0->TXD = 0x43;
+//	}
+//	if(u16count == 110)
+//	{
+//	NRF_SPI0->TXD = 0x53;
+//	}
+//	if(u16count == 120)
+//	{
+//	NRF_SPI0->TXD = 0x63;
+//	}
+//	if(u16count == 200)
+//	{
+//	  	u16count = 115;
+//	}
+	
+//	if(u16count == 2000)
+//	{
+//	NRF_SPI0->TXD = 0x53;
+//	}
+	
+//	if(u16count == 3000)
+//	{
+//	NRF_SPI0->TXD = 0x63;
+//	}
+//  	if(NRF_GPIO->IN & 0x00000200 == 0x00000000  )
+//	{
+//	  	Delay(2);
+//	  	NRF_SPI0->TXD = 0x43;
+//		bRXData = 1;
+//	}
+	
+//	if(bRXData)
+//	if(NRF_SPI0->EVENTS_READY)
+//	{
+//		u8 u8Test;
+//		
+//		u8Test = NRF_SPI0->RXD;		
+//		NRF_SPI0->EVENTS_READY = 0;
+//		BPEngenuicsSendData(&u8Test, sizeof(u8Test));
+//		bRXData = 0;
+//	}	
+
 
 
 

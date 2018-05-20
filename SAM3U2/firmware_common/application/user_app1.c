@@ -54,7 +54,8 @@ extern volatile u32 G_u32SystemTime1s;                    /*!< @brief From main.
 extern volatile u32 G_u32SystemFlags;                     /*!< @brief From main.c */
 extern volatile u32 G_u32ApplicationFlags;                /*!< @brief From main.c */
 
-
+extern u8 G_au8DebugScanfBuffer[DEBUG_SCANF_BUFFER_SIZE]; /* From debug.c */
+extern u8 G_u8DebugScanfCharCount;                    /* From debug.c */
 /***********************************************************************************************************************
 Global variable definitions with scope limited to this local application.
 Variable names shall start with "UserApp1_<type>" and be declared as static.
@@ -66,10 +67,142 @@ static fnCode_type UserApp1_pfStateMachine;               /*!< @brief The state 
 /**********************************************************************************************************************
 Function Definitions
 **********************************************************************************************************************/
+static SspConfigurationType Spi_Slave_Configuration;
+static SspConfigurationType* psSpi_Slave_Configuration;
 
+static SspPeripheralType* psSlave_RequestedSsp; 
+static u8 au8RxBuffer[100] ;
+static u8* pu8RxNextByte ;
+static u8 au8DebugGrid[][51]=
+{
+    "012345678901234567890123456789012345678901234567\n\r",
+	"1               |               |               \n\r",
+	"2               |               |               \n\r",
+	"3               |               |               \n\r",
+	"4       1       |       2       |       3       \n\r",
+	"5               |               |               \n\r",
+	"6               |               |               \n\r",
+	"7---------------|---------------|---------------\n\r",
+	"8               |               |               \n\r",
+	"9               |               |               \n\r",
+	"0               |               |               \n\r",
+	"1       4       |       5       |       6       \n\r",
+	"2               |               |               \n\r",
+	"3               |               |               \n\r",
+	"4---------------|---------------|---------------\n\r",
+	"5               |               |               \n\r",
+	"6               |               |               \n\r",
+	"7               |               |               \n\r",
+	"8       7       |       8       |       9       \n\r",
+	"9               |               |               \n\r",
+	"0               |               |               \n\r"
+};
+
+
+ 
+
+  
+  
 /*--------------------------------------------------------------------------------------------------------------------*/
 /*! @publicsection */                                                                                            
 /*--------------------------------------------------------------------------------------------------------------------*/
+static void DebugPrintfGrid (void)
+{
+  	for(u8 i = sizeof(au8DebugGrid) / 51, *pu8Point = au8DebugGrid[0]; i; i--, pu8Point += 51)
+	{
+		DebugPrintf(pu8Point);
+	}
+}
+
+static void UserApp1SlaveTxFlowCallback (void)
+{
+//  	for(u16 i=0;i<100;i++)
+//	{
+//	  	for(u16 b=0;b<100;b++);
+//	}
+  	AT91C_BASE_PIOB->PIO_CODR = PB_24_ANT_SRDY;
+}
+
+static void UserApp1SlaveRxFlowCallback (void)
+{
+  	static u8 u8Rx;
+	
+	u8Rx = AT91C_BASE_US2->US_RHR;
+	
+	switch(u8Rx)
+	{
+		case 0x11:
+		{
+			au8DebugGrid[4][8] = 'O';
+			DebugPrintfGrid();
+			break;
+		}
+		  
+		case 0x12:
+		{
+			au8DebugGrid[4][24] = 'O';
+			DebugPrintfGrid();
+			break;
+		}
+
+		case 0x13:
+		{
+			au8DebugGrid[4][40] = 'O';
+			DebugPrintfGrid();
+			break;
+		}
+
+		case 0x21:
+		{
+			au8DebugGrid[11][8] = 'O';
+			DebugPrintfGrid();
+			break;
+		}
+
+		case 0x22:
+		{
+			au8DebugGrid[11][24] = 'O';
+			DebugPrintfGrid();
+			break;
+		}
+
+		case 0x23:
+		{
+			au8DebugGrid[11][40] = 'O';
+			DebugPrintfGrid();
+			break;
+		}
+
+		case 0x31:
+		{
+			au8DebugGrid[18][8] = 'O';
+			DebugPrintfGrid();
+			break;
+		}
+
+		case 0x32:
+		{
+			au8DebugGrid[18][24] = 'O';
+			DebugPrintfGrid();
+			break;
+		}
+
+		case 0x33:
+		{
+			au8DebugGrid[18][40] = 'O';
+			DebugPrintfGrid();
+			break;
+		}
+
+		default:
+		{
+			DebugPrintf("\n\rInput command error!\n\r");
+			break;
+		} 
+	}		
+}
+
+
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 /*! @protectedsection */                                                                                            
@@ -92,6 +225,45 @@ Promises:
 */
 void UserApp1Initialize(void)
 {
+  	DebugPrintfGrid();
+  /*	for(u8 i = sizeof(au8DebugGrid) / 51, *pu8Point = au8DebugGrid[0]; i; i--, pu8Point += 51)
+	{
+		DebugPrintf(pu8Point);
+	}*/
+		
+  	AT91C_BASE_PIOB->PIO_PER |= ( PB_23_ANT_MRDY | PB_24_ANT_SRDY );  
+	AT91C_BASE_PIOB->PIO_OER |= ( PB_23_ANT_MRDY | PB_24_ANT_SRDY );
+	
+  	AT91C_BASE_PIOB->PIO_SODR = PB_23_ANT_MRDY;
+	AT91C_BASE_PIOB->PIO_SODR = PB_24_ANT_SRDY;
+	
+  	Spi_Slave_Configuration.SspPeripheral = USART2;
+	Spi_Slave_Configuration.pCsGpioAddress = AT91C_BASE_PIOB;
+	Spi_Slave_Configuration.u32CsPin = 1<<22;
+	Spi_Slave_Configuration.eBitOrder = 	LSB_FIRST;
+	Spi_Slave_Configuration.eSspMode = SPI_SLAVE_FLOW_CONTROL;
+	Spi_Slave_Configuration.fnSlaveTxFlowCallback = UserApp1SlaveTxFlowCallback;
+	Spi_Slave_Configuration.fnSlaveRxFlowCallback = UserApp1SlaveRxFlowCallback;
+	Spi_Slave_Configuration.pu8RxBufferAddress = au8RxBuffer;
+	Spi_Slave_Configuration.ppu8RxNextByte = &pu8RxNextByte;
+	Spi_Slave_Configuration.u16RxBufferSize = 64;
+	
+	psSpi_Slave_Configuration = &Spi_Slave_Configuration;
+	
+	psSlave_RequestedSsp = SspRequest(psSpi_Slave_Configuration);
+	
+	
+	
+	if(psSlave_RequestedSsp == NULL)
+	{
+	  	LedOn(RED);	
+		LedOff(GREEN);
+	}
+	else
+	{
+	  	LedOn(GREEN);		
+		LedOff(RED);	
+	}
   /* If good initialization, set state to Idle */
   if( 1 )
   {
@@ -124,7 +296,6 @@ Promises:
 void UserApp1RunActiveState(void)
 {
   UserApp1_pfStateMachine();
-
 } /* end UserApp1RunActiveState */
 
 
@@ -140,7 +311,104 @@ State Machine Function Definitions
 /* What does this state do? */
 static void UserApp1SM_Idle(void)
 {
-    
+  	static u8 au8DebugScanf[3];
+	static u8 u8TXData;
+	u8* pu8Point2 = NULL;
+	static bool bTXReady = FALSE;
+	
+	if(DebugScanf(au8DebugScanf)!= NULL)
+	{
+	  	AT91C_BASE_PIOB->PIO_SODR = PB_24_ANT_SRDY;
+	  	bTXReady = TRUE;
+	  	switch(au8DebugScanf[0])
+		{
+			case '1':
+			{
+				au8DebugGrid[4][8] = 'X';
+				u8TXData = 0x11;
+				DebugPrintfGrid();
+				break;
+			}
+			case '2':
+			{
+				au8DebugGrid[4][24] = 'X';
+				u8TXData = 0x12;
+				DebugPrintfGrid();
+				break;
+			}
+
+			case '3':
+			{
+				au8DebugGrid[4][40] = 'X';
+				u8TXData = 0x13;
+				DebugPrintfGrid();
+				break;
+			}
+
+			case '4':
+			{
+				au8DebugGrid[11][8] = 'X';
+				u8TXData = 0x21;
+				DebugPrintfGrid();
+				break;
+			}
+
+			case '5':
+			{
+				au8DebugGrid[11][24] = 'X';
+				u8TXData = 0x22;
+				DebugPrintfGrid();
+				break;
+			}
+
+			case '6':
+			{
+				au8DebugGrid[11][40] = 'X';
+				u8TXData = 0x23;
+				DebugPrintfGrid();
+				break;
+			}
+
+			case '7':
+			{
+				au8DebugGrid[18][8] = 'X';
+				u8TXData = 0x31;
+				DebugPrintfGrid();
+				break;
+			}
+
+			case '8':
+			{
+				au8DebugGrid[18][24] = 'X';
+				u8TXData = 0x32;
+				DebugPrintfGrid();
+				break;
+			}
+
+			case '9':
+			{
+				au8DebugGrid[18][40] = 'X';
+				u8TXData = 0x33;
+				DebugPrintfGrid();
+				break;
+			}
+
+			default:
+			{
+				DebugPrintf("\n\rInput command error!\n\rYour Input:");
+				break;
+			}
+		}		  			
+	}
+	
+	if(bTXReady)
+	{
+	  SspWriteByte(psSlave_RequestedSsp,u8TXData);
+	  //AT91C_BASE_US2->US_THR = u8TXData;
+	  
+				bTXReady = FALSE;
+		
+	}
 } /* end UserApp1SM_Idle() */
      
 

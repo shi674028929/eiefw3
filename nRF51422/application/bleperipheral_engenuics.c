@@ -36,6 +36,13 @@ static u16 BPEngenuics_u16ConnHandle;                    /* Connection handle in
 static bool BPEngenuics_bNotifcationEnabled;             /* Flag to indicate if Notifications have been enabled by the Client */
 
 
+
+/***************************************************************************/
+extern u8 au8SpiTxdBuffer[20];
+extern u8 u8SpiTxcount;
+extern u8 u8SpiTxLength;
+extern bool bSpiTxEn;
+
 /**********************************************************************************************************************
 Function Definitions
 **********************************************************************************************************************/
@@ -334,7 +341,77 @@ Promises:
 static void CallbackBleperipheralEngenuicsDataRx(u8* u8Data_, u8 u8Length_)
 {
   // Forward handling to ANTTT module.
-  
+  	if(u8Length_ == 1)
+	{
+		switch(*u8Data_)
+		{
+			case '1':
+			{
+				au8SpiTxdBuffer[0]=0x11;
+				u8SpiTxcount=0;
+				u8SpiTxLength=1;
+				bSpiTxEn=1;
+			   //NRF_SPI0->TXD    = 0x11;
+				break;
+			}
+			
+			case '2':
+			{
+				NRF_SPI0->TXD    = 0x12;
+				break;
+			}
+			
+			case '3':
+			{
+				NRF_SPI0->TXD    = 0x13;
+				break;
+			}
+			case '4':
+			{
+				NRF_SPI0->TXD    = 0x21;
+				break;
+			}
+			case '5':
+			{
+				NRF_SPI0->TXD    = 0x22;
+				break;
+			}
+			case '6':
+			{
+				au8SpiTxdBuffer[0]=0x23;
+				u8SpiTxcount=0;
+				u8SpiTxLength=1;
+				bSpiTxEn=1;
+			  //NRF_SPI0->TXD    = 0x23;
+				break;
+			}
+			case '7':
+			{
+				NRF_SPI0->TXD    = 0x31;
+				break;
+			}
+			case '8':
+			{
+				NRF_SPI0->TXD    = 0x32;
+				break;
+			}
+			case '9':
+			{
+				NRF_SPI0->TXD    = 0x33;
+				break;
+			}
+			
+			default:
+			{
+				NRF_SPI0->TXD    = 0xF0;
+				break;
+			}
+		}
+	}
+	else
+	{
+		NRF_SPI0->TXD    = 0xF0;
+	}
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/

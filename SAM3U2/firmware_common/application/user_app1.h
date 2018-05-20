@@ -39,6 +39,7 @@ void UserApp1Initialize(void);
 void UserApp1RunActiveState(void);
 
 
+
 /*------------------------------------------------------------------------------------------------------------------*/
 /*! @privatesection */                                                                                            
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -48,9 +49,10 @@ void UserApp1RunActiveState(void);
 State Machine Declarations
 ***********************************************************************************************************************/
 static void UserApp1SM_Idle(void);    
-static void UserApp1SM_Error(void);         
-
-
+static void UserApp1SM_Error(void);  
+static void UserApp1SlaveTxFlowCallback (void);
+static void UserApp1SlaveRxFlowCallback (void);
+static void DebugPrintfGrid (void);
 
 /**********************************************************************************************************************
 Constants / Definitions
