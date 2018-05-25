@@ -67,20 +67,20 @@ Promises:
 void AntttInitialize(void)
 {
 	
-	NRF_SPI0->PSELSCK = 11;
-	NRF_SPI0->PSELMISO = 12;
-	NRF_SPI0->PSELMOSI = 13;
-	NRF_SPI0->CONFIG = 0x3;
-	NRF_SPI0->FREQUENCY = SPI_FREQUENCY_FREQUENCY_K500 << SPI_FREQUENCY_FREQUENCY_Pos;
-	//NRF_SPI0->POWER = SPI_POWER_POWER_Disabled << SPI_POWER_POWER_Pos;
-//	NRF_SPI0->INTENSET = SPI_INTENSET_READY_Enabled << SPI_INTENSET_READY_Pos;
-//	NRF_SPI0->INTENCLR = SPI_INTENCLR_READY_Enabled << SPI_INTENCLR_READY_Pos;
-		  
-	//NRF_GPIO->OUTCLR = P0_10_SPI_CS;
-	NRF_TWI0->ENABLE = TWI_ENABLE_ENABLE_Disabled << TWI_ENABLE_ENABLE_Pos;
-	NRF_SPI0->ENABLE = SPI_ENABLE_ENABLE_Enabled << SPI_ENABLE_ENABLE_Pos;
-	NRF_SPI0->EVENTS_READY = 0;
-    Anttt_pfnStateMachine = AntttSM_Idle;
+		NRF_SPI0->PSELSCK = 11;
+		NRF_SPI0->PSELMISO = 12;
+		NRF_SPI0->PSELMOSI = 13;
+		NRF_SPI0->CONFIG = 0x3;
+		NRF_SPI0->FREQUENCY = SPI_FREQUENCY_FREQUENCY_K500 << SPI_FREQUENCY_FREQUENCY_Pos;
+		//NRF_SPI0->POWER = SPI_POWER_POWER_Disabled << SPI_POWER_POWER_Pos;
+		//	NRF_SPI0->INTENSET = SPI_INTENSET_READY_Enabled << SPI_INTENSET_READY_Pos;
+		//	NRF_SPI0->INTENCLR = SPI_INTENCLR_READY_Enabled << SPI_INTENCLR_READY_Pos;
+			
+		//NRF_GPIO->OUTCLR = P0_10_SPI_CS;
+		NRF_TWI0->ENABLE = TWI_ENABLE_ENABLE_Disabled << TWI_ENABLE_ENABLE_Pos;
+		NRF_SPI0->ENABLE = SPI_ENABLE_ENABLE_Enabled << SPI_ENABLE_ENABLE_Pos;
+		NRF_SPI0->EVENTS_READY = 0;
+		Anttt_pfnStateMachine = AntttSM_Idle;
   
 } /* end AntttInitialize() */
 
@@ -119,56 +119,90 @@ State: AntttSM_Idle
 */
 static void AntttSM_Idle(void)
 {
-  	static bool bRXData = 1;
-	static u16 u16count;
-	static u32 u32byte;
-    if(bSpiTxEn==1){
-	   NRF_GPIO->OUTSET = P0_26_LED_BLU;
-	   NRF_GPIO->OUTCLR = P0_10_SPI_CS;
-	   for(u16 i = 0 ; i <100 ; i++ ){
-		   for(u16 j = 0 ; j <1000 ; j++ );
-	   }
-	   if(NRF_SPI0->EVENTS_READY==1){
-	       	u32byte=NRF_SPI0->RXD;
-			NRF_SPI0->EVENTS_READY=0;
-			
-	   }
-	   if(u8SpiTxcount<u8SpiTxLength){
-		 
-	     // NRF_SPI0->TXD = au8SpiTxdBuffer[u8SpiTxcount];
-		 NRF_SPI0->TXD = 0x00000023;
-		 u8SpiTxcount++;
-	   }else{
-		  u8SpiTxcount=0;
-		  bSpiTxEn=0;
-		  for(u16 i = 0 ; i <50 ; i++ ){
-		   for(u16 j = 0 ; j <100 ; j++ );
-	      }
-		  NRF_GPIO->OUTSET = P0_10_SPI_CS;
-		  NRF_GPIO->OUTCLR = P0_26_LED_BLU;
-	   }
-		  
-		 
-	   
-    }
+		static bool bRXData = 1;
+		static u16 u16count;
+		static u8 u8byte;
+		static bool bFirst = 1;
 	
-	
-	if((NRF_GPIO->IN & 0x00000200) == 0x0 ){
-	   for(u16 i = 0 ; i <10 ; i++ ){
-		   for(u16 j = 0 ; j <100 ; j++ );
-	   }
-	   NRF_GPIO->OUTCLR = P0_10_SPI_CS;
-	   for(u16 i = 0 ; i <10 ; i++ ){
-		   for(u16 j = 0 ; j <100 ; j++ );
-	   }
-	   if(NRF_SPI0->EVENTS_READY==1){
-	       	u32byte=NRF_SPI0->RXD;
-			NRF_SPI0->EVENTS_READY=0;
-			
-	   }
-	   NRF_SPI0->TXD = 0x00000000;
+		if(bSpiTxEn==1)
+		{
+				NRF_GPIO->OUTSET = P0_26_LED_BLU;
+				NRF_GPIO->OUTCLR = P0_10_SPI_CS;
 
-	}
+				for(u16 i = 0 ; i <100 ; i++ )
+				{
+					for(u16 j = 0 ; j <1000 ; j++ );
+				}
+				
+				if(NRF_SPI0->EVENTS_READY==1)
+				{
+					u8byte=NRF_SPI0->RXD;
+					NRF_SPI0->EVENTS_READY=0;
+				}
+				
+				if(u8SpiTxcount<u8SpiTxLength)
+				{
+						NRF_SPI0->TXD = au8SpiTxdBuffer[u8SpiTxcount];
+						u8SpiTxcount++;
+				}
+				else
+				{
+						u8SpiTxcount=0;
+						bSpiTxEn=0;
+						
+						for(u16 i = 0 ; i <50 ; i++ )
+						{
+							for(u16 j = 0 ; j <100 ; j++ );
+						}
+						
+						NRF_GPIO->OUTSET = P0_10_SPI_CS;
+						NRF_GPIO->OUTCLR = P0_26_LED_BLU;
+				}		 
+		}
+		
+		if((NRF_GPIO->IN & 0x00000200) == 0x0 )
+		{
+				for(u16 i = 0 ; i <10 ; i++ )
+				{
+					for(u16 j = 0 ; j <100 ; j++ );
+				}
+				
+				NRF_GPIO->OUTCLR = P0_10_SPI_CS;
+				
+				for(u16 i = 0 ; i <10 ; i++ )
+				{
+					for(u16 j = 0 ; j <100 ; j++ );
+				}
+				
+				if(NRF_SPI0->EVENTS_READY==1)
+				{
+						u8byte=NRF_SPI0->RXD;					
+						NRF_SPI0->EVENTS_READY=0;		
+						
+//						for(u16 i = 0 ; i <10 ; i++ )
+//						{
+//							for(u16 j = 0 ; j <100 ; j++ );
+//						}
+//						
+//						NRF_GPIO->OUTSET = P0_10_SPI_CS;
+//						BPEngenuicsSendData(&u8byte, sizeof(u8byte));
+				}
+				
+				NRF_SPI0->TXD = 0x88;
+				
+				for(u16 i = 0 ; i <10 ; i++ )
+				{
+					for(u16 j = 0 ; j <100 ; j++ );
+				}
+
+				BPEngenuicsSendData(&u8byte, sizeof(u8byte));
+				
+//				if(bFirst)
+//				{
+//					NRF_SPI0->TXD = 0x00000000;
+//					bFirst = 0;			
+//				}
+		}
 }
 	
 

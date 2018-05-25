@@ -9,7 +9,7 @@ TriggerName=main
 LimitSize=0
 ByteLimit=50
 [DebugChecksum]
-Checksum=1946754744
+Checksum=1395440660
 [Exceptions]
 StopOnUncaught=_ 0
 StopOnThrow=_ 0
@@ -24,6 +24,8 @@ CStepIntDis=_ 0
 TraceBufferSize=0x00010000
 TraceStallIfFIFOFull=0x00000000
 TracePortSize=0x00000000
+[struct_types]
+Fmt0=struct _AT91S_USART-US_RHR	4	0
 [watch_formats]
 Fmt0={W}3:i	3	0
 Fmt1={W}3:u32Byte	4	0
@@ -47,8 +49,7 @@ Exclusions=
 [Disassemble mode]
 mode=0
 [Breakpoints2]
-Bp0=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\..\firmware_common\drivers\sam3u_ssp.c}.853.5" 0 0 1 "" 0 "" 0
-Count=1
+Count=0
 [Aliases]
 Count=0
 SuppressDialog=0

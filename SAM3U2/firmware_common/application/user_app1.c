@@ -72,6 +72,7 @@ static SspConfigurationType* psSpi_Slave_Configuration;
 
 static SspPeripheralType* psSlave_RequestedSsp; 
 static u8 au8RxBuffer[100] ;
+static u8 u8ChessNumber = 0;
 static u8* pu8RxNextByte ;
 static u8 au8DebugGrid[][51]=
 {
@@ -106,101 +107,6 @@ static u8 au8DebugGrid[][51]=
 /*--------------------------------------------------------------------------------------------------------------------*/
 /*! @publicsection */                                                                                            
 /*--------------------------------------------------------------------------------------------------------------------*/
-static void DebugPrintfGrid (void)
-{
-  	for(u8 i = sizeof(au8DebugGrid) / 51, *pu8Point = au8DebugGrid[0]; i; i--, pu8Point += 51)
-	{
-		DebugPrintf(pu8Point);
-	}
-}
-
-static void UserApp1SlaveTxFlowCallback (void)
-{
-  	for(u16 i=0;i<100;i++)
-	{
-	  	for(u16 b=0;b<100;b++);
-	}
-  	AT91C_BASE_PIOB->PIO_CODR = PB_24_ANT_SRDY;
-}
-
-static void UserApp1SlaveRxFlowCallback (void)
-{
-  	static u8 u8Rx;
-	
-	u8Rx = AT91C_BASE_US2->US_RHR;
-	
-	switch(u8Rx)
-	{
-		case 0x11:
-		{
-			au8DebugGrid[4][8] = 'O';
-			DebugPrintfGrid();
-			break;
-		}
-		  
-		case 0x12:
-		{
-			au8DebugGrid[4][24] = 'O';
-			DebugPrintfGrid();
-			break;
-		}
-
-		case 0x13:
-		{
-			au8DebugGrid[4][40] = 'O';
-			DebugPrintfGrid();
-			break;
-		}
-
-		case 0x21:
-		{
-			au8DebugGrid[11][8] = 'O';
-			DebugPrintfGrid();
-			break;
-		}
-
-		case 0x22:
-		{
-			au8DebugGrid[11][24] = 'O';
-			DebugPrintfGrid();
-			break;
-		}
-
-		case 0x23:
-		{
-			au8DebugGrid[11][40] = 'O';
-			DebugPrintfGrid();
-			break;
-		}
-
-		case 0x31:
-		{
-			au8DebugGrid[18][8] = 'O';
-			DebugPrintfGrid();
-			break;
-		}
-
-		case 0x32:
-		{
-			au8DebugGrid[18][24] = 'O';
-			DebugPrintfGrid();
-			break;
-		}
-
-		case 0x33:
-		{
-			au8DebugGrid[18][40] = 'O';
-			DebugPrintfGrid();
-			break;
-		}
-
-		default:
-		{
-			DebugPrintf("\n\rInput command error!\n\r");
-			break;
-		} 
-	}		
-}
 
 
 
@@ -257,12 +163,12 @@ void UserApp1Initialize(void)
 	if(psSlave_RequestedSsp == NULL)
 	{
 	  	LedOn(RED);	
-		LedOff(GREEN);
+			LedOff(GREEN);
 	}
 	else
 	{
 	  	LedOn(GREEN);		
-		LedOff(RED);	
+			LedOff(RED);	
 	}
   /* If good initialization, set state to Idle */
   if( 1 )
@@ -277,7 +183,196 @@ void UserApp1Initialize(void)
 
 } /* end UserApp1Initialize() */
 
-  
+/*--------------------------------------------------------------------------------------------------------------------*/
+static void DebugPrintfGrid (void)
+{
+  	for(u8 i = sizeof(au8DebugGrid) / 51, *pu8Point = au8DebugGrid[0]; i; i--, pu8Point += 51)
+	{
+		DebugPrintf(pu8Point);
+	}
+}
+
+static void UserApp1SlaveTxFlowCallback (void)
+{
+		for(u16 i=0;i<100;i++)
+		{
+			for(u16 b=0;b<100;b++);
+		}
+		AT91C_BASE_PIOB->PIO_CODR = PB_24_ANT_SRDY;
+		
+		
+}
+
+static void UserApp1SlaveRxFlowCallback (void)
+{
+	static u8 u8Rx;
+	
+	u8Rx = psSlave_RequestedSsp->pBaseAddress->US_RHR;
+	u8Rx = __RBIT(u8Rx)>>24;
+//	u8Rx = AT91C_BASE_US2->US_RHR;
+	
+	switch(u8Rx)
+	{
+		case 0x11:
+		{
+			if(au8DebugGrid[4][8] ==  '1')
+						{
+								au8DebugGrid[4][8] = 'O';
+								u8ChessNumber++;
+								DebugPrintfGrid();
+								DebugPrintf("\n\r Please X to play chess\n\r");
+						}
+						else
+						{
+								DebugPrintf("\n\rInput command error!\n\rYour Input:");
+						}
+			break;
+		}
+		  
+		case 0x12:
+		{
+			if(au8DebugGrid[4][24] ==  '2')
+						{
+								au8DebugGrid[4][24] = 'O';
+								u8ChessNumber++;
+								DebugPrintfGrid();
+								DebugPrintf("\n\r Please X to play chess\n\r");
+						}
+						else
+						{
+								DebugPrintf("\n\rInput command error!\n\rYour Input:");
+						}
+			break;
+		}
+
+		case 0x13:
+		{
+			if(au8DebugGrid[4][40] ==  '3')
+						{
+								au8DebugGrid[4][40] = 'O';
+								u8ChessNumber++;
+								DebugPrintfGrid();
+								DebugPrintf("\n\r Please X to play chess\n\r");
+						}
+						else
+						{
+								DebugPrintf("\n\rInput command error!\n\rYour Input:");
+						}
+			break;
+		}
+
+		case 0x21:
+		{
+			if(au8DebugGrid[11][8] ==  '4')
+						{
+								au8DebugGrid[11][8] = 'O';
+								u8ChessNumber++;
+								DebugPrintfGrid();
+								DebugPrintf("\n\r Please X to play chess\n\r");
+						}
+						else
+						{
+								DebugPrintf("\n\rInput command error!\n\rYour Input:");
+						}
+			break;
+		}
+
+		case 0x22:
+		{
+			if(au8DebugGrid[11][24] ==  '5')
+						{
+								au8DebugGrid[11][24] = 'O';
+								u8ChessNumber++;
+								DebugPrintfGrid();
+								DebugPrintf("\n\r Please X to play chess\n\r");
+						}
+						else
+						{
+								DebugPrintf("\n\rInput command error!\n\rYour Input:");
+						}
+			break;
+		}
+
+		case 0x23:
+		{
+			if(au8DebugGrid[11][40] ==  '6')
+						{
+								au8DebugGrid[11][40] = 'O';
+								u8ChessNumber++;
+								DebugPrintfGrid();
+								DebugPrintf("\n\r Please X to play chess\n\r");
+						}
+						else
+						{
+								DebugPrintf("\n\rInput command error!\n\rYour Input:");
+						}
+			break;
+		}
+
+		case 0x31:
+		{
+			if(au8DebugGrid[18][8] ==  '7')
+						{
+								au8DebugGrid[18][8] = 'O';
+								u8ChessNumber++;
+								DebugPrintfGrid();
+								DebugPrintf("\n\r Please X to play chess\n\r");
+						}
+						else
+						{
+								DebugPrintf("\n\rInput command error!\n\rYour Input:");
+						}
+			break;
+		}
+
+		case 0x32:
+		{
+			if(au8DebugGrid[18][24] ==  '8')
+						{
+								au8DebugGrid[18][24] = 'O';
+								u8ChessNumber++;
+								DebugPrintfGrid();
+								DebugPrintf("\n\r Please X to play chess\n\r");
+						}
+						else
+						{
+								DebugPrintf("\n\rInput command error!\n\rYour Input:");
+						}
+			break;
+		}
+
+		case 0x33:
+		{
+			if(au8DebugGrid[18][40] ==  '9')
+						{
+								au8DebugGrid[18][40] = 'O';
+								u8ChessNumber++;
+								DebugPrintfGrid();
+								DebugPrintf("\n\r Please X to play chess\n\r");
+						}
+						else
+						{
+								DebugPrintf("\n\rInput command error!\n\rYour Input:");
+						}
+			break;
+		}
+		
+		case 0x88:
+		{
+			AT91C_BASE_PIOB->PIO_SODR = PB_24_ANT_SRDY;
+			break;
+		}
+
+		default:
+		{
+			break;
+		} 
+	}		
+}
+
+
+
+/*--------------------------------------------------------------------------------------------------------------------*/  
 /*!----------------------------------------------------------------------------------------------------------------------
 @fn void UserApp1RunActiveState(void)
 
@@ -311,103 +406,341 @@ State Machine Function Definitions
 /* What does this state do? */
 static void UserApp1SM_Idle(void)
 {
-  	static u8 au8DebugScanf[3];
+  static u8 au8DebugScanf[3];
 	static u8 u8TXData;
 	u8* pu8Point2 = NULL;
 	static bool bTXReady = FALSE;
+	static bool bGameOver = TRUE;
 	
 	if(DebugScanf(au8DebugScanf)!= NULL)
 	{
 	  	AT91C_BASE_PIOB->PIO_SODR = PB_24_ANT_SRDY;
 	  	bTXReady = TRUE;
 	  	switch(au8DebugScanf[0])
-		{
-			case '1':
 			{
-				au8DebugGrid[4][8] = 'X';
-				u8TXData = 0x11;
-				DebugPrintfGrid();
-				break;
-			}
-			case '2':
-			{
-				au8DebugGrid[4][24] = 'X';
-				u8TXData = 0x12;
-				DebugPrintfGrid();
-				break;
-			}
+					case '1':
+					{
+						if(au8DebugGrid[4][8] ==  '1')
+						{
+								au8DebugGrid[4][8] = 'X';
+								u8ChessNumber++;
+								u8TXData = 0x11;
+								DebugPrintfGrid();
+								DebugPrintf("\n\r Please O to play chess\n\r");
+						}
+						else
+						{
+								DebugPrintf("\n\rInput command error!\n\rYour Input:");
+						}
+						
+						break;
+					}
+					case '2':
+					{
+						if(au8DebugGrid[4][24] == '2')
+						{
+								au8DebugGrid[4][24] = 'X';
+								u8ChessNumber++;
+								u8TXData = 0x12;
+								DebugPrintfGrid();
+								DebugPrintf("\n\r Please O to play chess\n\r");
+						}
+						else
+						{
+								DebugPrintf("\n\rInput command error!\n\rYour Input:");
+						}
+						break;
+					}
 
-			case '3':
-			{
-				au8DebugGrid[4][40] = 'X';
-				u8TXData = 0x13;
-				DebugPrintfGrid();
-				break;
-			}
+					case '3':
+					{
+						if(au8DebugGrid[4][40] == '3')
+						{
+								au8DebugGrid[4][40] = 'X';
+								u8ChessNumber++;
+								u8TXData = 0x13;
+								DebugPrintfGrid();
+								DebugPrintf("\n\r Please O to play chess\n\r");
+						}
+						else
+						{
+								DebugPrintf("\n\rInput command error!\n\rYour Input:");
+						}
+						break;
+					}
 
-			case '4':
-			{
-				au8DebugGrid[11][8] = 'X';
-				u8TXData = 0x21;
-				DebugPrintfGrid();
-				break;
-			}
+					case '4':
+					{
+						if(au8DebugGrid[11][8] == '4')
+						{
+								au8DebugGrid[11][8] = 'X';
+								u8ChessNumber++;
+								u8TXData = 0x21;
+								DebugPrintfGrid();
+								DebugPrintf("\n\r Please O to play chess\n\r");
+						}
+						else
+						{
+								DebugPrintf("\n\rInput command error!\n\rYour Input:");
+						}
+						break;
+					}
 
-			case '5':
-			{
-				au8DebugGrid[11][24] = 'X';
-				u8TXData = 0x22;
-				DebugPrintfGrid();
-				break;
-			}
+					case '5':
+					{
+						if(au8DebugGrid[11][24] == '5')
+						{
+								au8DebugGrid[11][24] = 'X';
+								u8ChessNumber++;
+								u8TXData = 0x22;
+								DebugPrintfGrid();
+								DebugPrintf("\n\r Please O to play chess\n\r");
+						}
+						else
+						{
+								DebugPrintf("\n\rInput command error!\n\rYour Input:");
+						}
+						break;
+					}
 
-			case '6':
-			{
-				au8DebugGrid[11][40] = 'X';
-				u8TXData = 0x23;
-				DebugPrintfGrid();
-				break;
-			}
+					case '6':
+					{
+						if(au8DebugGrid[11][40] == '6')
+						{
+								au8DebugGrid[11][40] = 'X';
+								u8ChessNumber++;
+								u8TXData = 0x23;
+								DebugPrintfGrid();
+								DebugPrintf("\n\r Please O to play chess\n\r");
+						}
+						else
+						{
+								DebugPrintf("\n\rInput command error!\n\rYour Input:");
+						}				
+						break;
+					}
 
-			case '7':
-			{
-				au8DebugGrid[18][8] = 'X';
-				u8TXData = 0x31;
-				DebugPrintfGrid();
-				break;
-			}
+					case '7':
+					{
+						if(au8DebugGrid[18][8] == '7')
+						{
+								au8DebugGrid[18][8] = 'X';
+								u8ChessNumber++;
+								u8TXData = 0x31;
+								DebugPrintfGrid();
+								DebugPrintf("\n\r Please O to play chess\n\r");
+						}
+						else
+						{
+								DebugPrintf("\n\rInput command error!\n\rYour Input:");
+						}
+						break;
+					}
 
-			case '8':
-			{
-				au8DebugGrid[18][24] = 'X';
-				u8TXData = 0x32;
-				DebugPrintfGrid();
-				break;
-			}
+					case '8':
+					{
+						if(au8DebugGrid[18][24] == '8')
+						{
+								au8DebugGrid[18][24] = 'X';
+								u8ChessNumber++;
+								u8TXData = 0x32;
+								DebugPrintfGrid();
+								DebugPrintf("\n\r Please O to play chess\n\r");
+						}
+						else
+						{
+								DebugPrintf("\n\rInput command error!\n\rYour Input:");
+						}
+						break;
+					}
 
-			case '9':
-			{
-				au8DebugGrid[18][40] = 'X';
-				u8TXData = 0x33;
-				DebugPrintfGrid();
-				break;
-			}
+					case '9':
+					{
+						if(au8DebugGrid[18][40] == '9')
+						{
+								au8DebugGrid[18][40] = 'X';
+								u8ChessNumber++;
+								u8TXData = 0x33;
+								DebugPrintfGrid();
+								DebugPrintf("\n\r Please O to play chess\n\r");
+						}
+						else
+						{
+								DebugPrintf("\n\rInput command error!\n\rYour Input:");
+						}
+						break;
+					}
 
-			default:
-			{
-				DebugPrintf("\n\rInput command error!\n\rYour Input:");
-				break;
-			}
+					default:
+					{
+						DebugPrintf("\n\rInput command error!\n\rYour Input:");
+						break;
+					}
 		}		  			
 	}
 	
 	if(bTXReady)
 	{
-	  SspWriteByte(psSlave_RequestedSsp,u8TXData);
-	  //AT91C_BASE_US2->US_THR = u8TXData;
-	  
-				bTXReady = FALSE;
-		
+		SspWriteByte(psSlave_RequestedSsp,u8TXData);
+		bTXReady = FALSE;	
+	}
+	
+//	if(AT91C_BASE_PIOB->PIO_ODSR & PB_24_ANT_SRDY == 0)
+//	{
+//		for(u16 i=0;i<100;i++)
+//		{
+//			for(u16 b=0;b<100;b++);
+//		}
+//			if(AT91C_BASE_PIOB->PIO_ODSR & PB_22_ANT_USPI2_CS == 0)
+//			{
+//					AT91C_BASE_PIOB->PIO_SODR = PB_24_ANT_SRDY;
+//			}
+//	}
+	
+	if(bGameOver)
+	{
+			if(au8DebugGrid[4][8] == 'X' && au8DebugGrid[4][24] == 'X' && au8DebugGrid[4][40] == 'X')
+			{
+					DebugPrintf("\n\rX WIN");
+					bGameOver = FALSE;
+					u8ChessNumber = 0;
+			}
+			
+			if(au8DebugGrid[11][8] == 'X' && au8DebugGrid[11][24] == 'X' && au8DebugGrid[11][40] == 'X')
+			{
+					DebugPrintf("\n\rX WIN");
+					bGameOver = FALSE;
+					u8ChessNumber = 0;
+			}
+			
+			if(au8DebugGrid[18][8] == 'X' && au8DebugGrid[18][24] == 'X' && au8DebugGrid[18][40] == 'X')
+			{
+					DebugPrintf("\n\rX WIN");
+					bGameOver = FALSE;
+					u8ChessNumber = 0;
+			}
+			
+			if(au8DebugGrid[4][8] == 'X' && au8DebugGrid[11][8] == 'X' && au8DebugGrid[18][8] == 'X')
+			{
+					DebugPrintf("\n\rX WIN");
+					bGameOver = FALSE;
+					u8ChessNumber = 0;
+			}
+			
+			if(au8DebugGrid[4][24] == 'X' && au8DebugGrid[11][24] == 'X' && au8DebugGrid[18][24] == 'X')
+			{
+					DebugPrintf("\n\rX WIN");
+					bGameOver = FALSE;
+					u8ChessNumber = 0;
+			}
+			
+			if(au8DebugGrid[4][40] == 'X' && au8DebugGrid[11][40] == 'X' && au8DebugGrid[18][40] == 'X')
+			{
+					DebugPrintf("\n\rX WIN");
+					bGameOver = FALSE;
+					u8ChessNumber = 0;
+			}
+			
+			if(au8DebugGrid[4][8] == 'X' && au8DebugGrid[11][24] == 'X' && au8DebugGrid[18][40] == 'X')
+			{
+					DebugPrintf("\n\rX WIN");
+					bGameOver = FALSE;
+					u8ChessNumber = 0;
+			}
+			
+			if(au8DebugGrid[4][40] == 'X' && au8DebugGrid[11][24] =='X' && au8DebugGrid[18][8] == 'X')
+			{
+					DebugPrintf("\n\rX WIN");
+					bGameOver = FALSE;
+					u8ChessNumber = 0;
+			}
+			
+			if(au8DebugGrid[4][8] == 'O' && au8DebugGrid[4][24] == 'O' && au8DebugGrid[4][40] == 'O')
+			{
+					DebugPrintf("\n\rO WIN");
+					bGameOver = FALSE;
+					u8ChessNumber = 0;
+			}
+			
+			if(au8DebugGrid[11][8] == 'O' && au8DebugGrid[11][24] == 'O' && au8DebugGrid[11][40] == 'O')
+			{
+					DebugPrintf("\n\rO WIN");
+					bGameOver = FALSE;
+					u8ChessNumber = 0;
+			}
+			
+			if(au8DebugGrid[18][8] == 'O' && au8DebugGrid[18][24] == 'O' && au8DebugGrid[18][40] == 'O')
+			{
+					DebugPrintf("\n\rO WIN");
+					bGameOver = FALSE;
+					u8ChessNumber = 0;
+			}
+			
+			if(au8DebugGrid[4][8] == 'O' && au8DebugGrid[11][8] == 'O' && au8DebugGrid[18][8] == 'O')
+			{
+					DebugPrintf("\n\rO WIN");
+					bGameOver = FALSE;
+					u8ChessNumber = 0;
+			}
+			
+			if(au8DebugGrid[4][24] == 'O' && au8DebugGrid[11][24] == 'O' && au8DebugGrid[18][24] == 'O')
+			{
+					DebugPrintf("\n\rO WIN");
+					bGameOver = FALSE;
+					u8ChessNumber = 0;
+			}
+			
+			if(au8DebugGrid[4][40] == 'O' && au8DebugGrid[11][40] == 'O' && au8DebugGrid[18][40] == 'O')
+			{
+					DebugPrintf("\n\rO WIN");
+					bGameOver = FALSE;
+					u8ChessNumber = 0;
+			}
+			
+			if(au8DebugGrid[4][8] == 'O' && au8DebugGrid[11][24] == 'O' && au8DebugGrid[18][40] == 'O')
+			{
+					DebugPrintf("\n\rO WIN");
+					bGameOver = FALSE;
+					u8ChessNumber = 0;
+			}
+			
+			if(au8DebugGrid[4][40] == 'O' && au8DebugGrid[11][24] =='O' && au8DebugGrid[18][8] == 'O')
+			{
+					DebugPrintf("\n\rO WIN");
+					bGameOver = FALSE;
+					u8ChessNumber = 0;
+			}
+			
+			if(u8ChessNumber == 9)
+			{
+					if(au8DebugGrid[4][8] !=  '1' && au8DebugGrid[4][24] != '2' && au8DebugGrid[4][40] != '3' 
+						 && au8DebugGrid[11][8] !=  '4' && au8DebugGrid[11][24] != '5' && au8DebugGrid[11][40] != '6' 
+							 && au8DebugGrid[18][8] !=  '7' && au8DebugGrid[18][24] != '8' && au8DebugGrid[18][40] != '9'  )
+					{
+							DebugPrintf("\n\rA Draw");
+					}
+					u8ChessNumber = 0;
+					bGameOver = FALSE;
+			}
+	}
+	
+	if( WasButtonPressed(BUTTON0) )
+	{
+				ButtonAcknowledge(BUTTON0);
+				DebugPrintf("\n\r Start all over again\n\r");
+				au8DebugGrid[4][8] =  '1' ;
+				au8DebugGrid[4][24] = '2' ;
+				au8DebugGrid[4][40] = '3' ;
+				au8DebugGrid[11][8] =  '4' ;
+				au8DebugGrid[11][24] = '5' ;
+				au8DebugGrid[11][40] = '6' ;
+				au8DebugGrid[18][8] =  '7' ;
+				au8DebugGrid[18][24] = '8'  ;
+//			au8DebugGrid[18][40] = '9' ;
+
+				DebugPrintfGrid();		
+				u8ChessNumber = 0;
+				bGameOver = TRUE;
 	}
 } /* end UserApp1SM_Idle() */
      

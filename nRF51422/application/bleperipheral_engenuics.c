@@ -357,23 +357,39 @@ static void CallbackBleperipheralEngenuicsDataRx(u8* u8Data_, u8 u8Length_)
 			
 			case '2':
 			{
-				NRF_SPI0->TXD    = 0x12;
+//				NRF_SPI0->TXD    = 0x12;
+				au8SpiTxdBuffer[0]=0x12;
+				u8SpiTxcount=0;
+				u8SpiTxLength=1;
+				bSpiTxEn=1;
 				break;
 			}
 			
 			case '3':
 			{
-				NRF_SPI0->TXD    = 0x13;
+//				NRF_SPI0->TXD    = 0x13;
+				au8SpiTxdBuffer[0]=0x13;
+				u8SpiTxcount=0;
+				u8SpiTxLength=1;
+				bSpiTxEn=1;
 				break;
 			}
 			case '4':
 			{
-				NRF_SPI0->TXD    = 0x21;
+//				NRF_SPI0->TXD    = 0x21;
+				au8SpiTxdBuffer[0]=0x21;
+				u8SpiTxcount=0;
+				u8SpiTxLength=1;
+				bSpiTxEn=1;
 				break;
 			}
 			case '5':
 			{
-				NRF_SPI0->TXD    = 0x22;
+//				NRF_SPI0->TXD    = 0x22;
+				au8SpiTxdBuffer[0]=0x22;
+				u8SpiTxcount=0;
+				u8SpiTxLength=1;
+				bSpiTxEn=1;
 				break;
 			}
 			case '6':
@@ -387,17 +403,29 @@ static void CallbackBleperipheralEngenuicsDataRx(u8* u8Data_, u8 u8Length_)
 			}
 			case '7':
 			{
-				NRF_SPI0->TXD    = 0x31;
+//				NRF_SPI0->TXD    = 0x31;
+				au8SpiTxdBuffer[0]=0x31;
+				u8SpiTxcount=0;
+				u8SpiTxLength=1;
+				bSpiTxEn=1;
 				break;
 			}
 			case '8':
 			{
-				NRF_SPI0->TXD    = 0x32;
+//				NRF_SPI0->TXD    = 0x32;
+				au8SpiTxdBuffer[0]=0x32;
+				u8SpiTxcount=0;
+				u8SpiTxLength=1;
+				bSpiTxEn=1;
 				break;
 			}
 			case '9':
 			{
-				NRF_SPI0->TXD    = 0x33;
+//				NRF_SPI0->TXD    = 0x33;
+				au8SpiTxdBuffer[0]=0x33;
+				u8SpiTxcount=0;
+				u8SpiTxLength=1;
+				bSpiTxEn=1;
 				break;
 			}
 			
