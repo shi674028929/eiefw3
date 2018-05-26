@@ -66,20 +66,16 @@ Promises:
 */
 void AntttInitialize(void)
 {
-	
+	//		configuration of the SPI0 //
 		NRF_SPI0->PSELSCK = 11;
 		NRF_SPI0->PSELMISO = 12;
 		NRF_SPI0->PSELMOSI = 13;
 		NRF_SPI0->CONFIG = 0x3;
-		NRF_SPI0->FREQUENCY = SPI_FREQUENCY_FREQUENCY_K500 << SPI_FREQUENCY_FREQUENCY_Pos;
-		//NRF_SPI0->POWER = SPI_POWER_POWER_Disabled << SPI_POWER_POWER_Pos;
-		//	NRF_SPI0->INTENSET = SPI_INTENSET_READY_Enabled << SPI_INTENSET_READY_Pos;
-		//	NRF_SPI0->INTENCLR = SPI_INTENCLR_READY_Enabled << SPI_INTENCLR_READY_Pos;
-			
-		//NRF_GPIO->OUTCLR = P0_10_SPI_CS;
+		NRF_SPI0->FREQUENCY = SPI_FREQUENCY_FREQUENCY_K500 << SPI_FREQUENCY_FREQUENCY_Pos;			
 		NRF_TWI0->ENABLE = TWI_ENABLE_ENABLE_Disabled << TWI_ENABLE_ENABLE_Pos;
 		NRF_SPI0->ENABLE = SPI_ENABLE_ENABLE_Enabled << SPI_ENABLE_ENABLE_Pos;
 		NRF_SPI0->EVENTS_READY = 0;
+		
 		Anttt_pfnStateMachine = AntttSM_Idle;
   
 } /* end AntttInitialize() */
@@ -122,14 +118,16 @@ static void AntttSM_Idle(void)
 		static bool bRXData = 1;
 		static u16 u16count;
 		static u8 u8byte;
+		static u8 u8TXtoBle;
 		static bool bFirst = 1;
 	
+		//	Enter when data sent by bluetooth is received and determined to be valid values	//
 		if(bSpiTxEn==1)
 		{
-				NRF_GPIO->OUTSET = P0_26_LED_BLU;
-				NRF_GPIO->OUTCLR = P0_10_SPI_CS;
+				NRF_GPIO->OUTSET = P0_26_LED_BLU;  //	the blue lights//
+				NRF_GPIO->OUTCLR = P0_10_SPI_CS;		//	Pull down the CS and start communicating //
 
-				for(u16 i = 0 ; i <100 ; i++ )
+				for(u16 i = 0 ; i <100 ; i++ )   // 	time delay //
 				{
 					for(u16 j = 0 ; j <1000 ; j++ );
 				}
@@ -142,7 +140,7 @@ static void AntttSM_Idle(void)
 				
 				if(u8SpiTxcount<u8SpiTxLength)
 				{
-						NRF_SPI0->TXD = au8SpiTxdBuffer[u8SpiTxcount];
+						NRF_SPI0->TXD = au8SpiTxdBuffer[u8SpiTxcount]; 		// send data to SAM3U //
 						u8SpiTxcount++;
 				}
 				else
@@ -160,7 +158,8 @@ static void AntttSM_Idle(void)
 				}		 
 		}
 		
-		if((NRF_GPIO->IN & 0x00000200) == 0x0 )
+		//		Determine whether SAM3U is sending data//
+		if((NRF_GPIO->IN & 0x00000200) == 0x0 )			// Determine the SRDY//
 		{
 				for(u16 i = 0 ; i <10 ; i++ )
 				{
@@ -177,83 +176,78 @@ static void AntttSM_Idle(void)
 				if(NRF_SPI0->EVENTS_READY==1)
 				{
 						u8byte=NRF_SPI0->RXD;					
-						NRF_SPI0->EVENTS_READY=0;		
-						
-//						for(u16 i = 0 ; i <10 ; i++ )
-//						{
-//							for(u16 j = 0 ; j <100 ; j++ );
-//						}
-//						
-//						NRF_GPIO->OUTSET = P0_10_SPI_CS;
-//						BPEngenuicsSendData(&u8byte, sizeof(u8byte));
+						NRF_SPI0->EVENTS_READY=0;								
 				}
 				
-				NRF_SPI0->TXD = 0x88;
+				NRF_SPI0->TXD = 0x88;		// send 0x88 to indicate to SAM3U that it has received the message //
 				
 				for(u16 i = 0 ; i <10 ; i++ )
 				{
 					for(u16 j = 0 ; j <100 ; j++ );
 				}
-
-				BPEngenuicsSendData(&u8byte, sizeof(u8byte));
 				
-//				if(bFirst)
-//				{
-//					NRF_SPI0->TXD = 0x00000000;
-//					bFirst = 0;			
-//				}
+				switch(u8byte)
+				{
+						case 0x11:
+						{
+								u8TXtoBle = 1;
+								break;
+						}
+
+						case 0x12:
+						{
+								u8TXtoBle = 2;
+								break;
+						}
+						
+						case 0x13:
+						{
+								u8TXtoBle = 3;
+								break;
+						}
+						
+						case 0x21:
+						{
+								u8TXtoBle = 4;
+								break;
+						}
+						
+						case 0x22:
+						{
+								u8TXtoBle = 5;
+								break;
+						}
+						
+						case 0x23:
+						{
+								u8TXtoBle = 6;
+								break;
+						}
+						
+						case 0x31:
+						{
+								u8TXtoBle = 7;
+								break;
+						}
+						
+						case 0x32:
+						{
+								u8TXtoBle = 8;
+								break;
+						}
+						
+						case 0x33:
+						{
+								u8TXtoBle = 9;
+								break;
+						}
+				}
+
+				BPEngenuicsSendData(&u8TXtoBle, sizeof(u8TXtoBle));		//	send data to bluetooth //
+				
 		}
 }
 	
-
-//	u16count++;
-//	if(u16count == 100)
-//	{
-//	NRF_SPI0->TXD = 0x43;
-//	}
-//	if(u16count == 110)
-//	{
-//	NRF_SPI0->TXD = 0x53;
-//	}
-//	if(u16count == 120)
-//	{
-//	NRF_SPI0->TXD = 0x63;
-//	}
-//	if(u16count == 200)
-//	{
-//	  	u16count = 115;
-//	}
-	
-//	if(u16count == 2000)
-//	{
-//	NRF_SPI0->TXD = 0x53;
-//	}
-	
-//	if(u16count == 3000)
-//	{
-//	NRF_SPI0->TXD = 0x63;
-//	}
-//  	if(NRF_GPIO->IN & 0x00000200 == 0x00000000  )
-//	{
-//	  	Delay(2);
-//	  	NRF_SPI0->TXD = 0x43;
-//		bRXData = 1;
-//	}
-	
-//	if(bRXData)
-//	if(NRF_SPI0->EVENTS_READY)
-//	{
-//		u8 u8Test;
-//		
-//		u8Test = NRF_SPI0->RXD;		
-//		NRF_SPI0->EVENTS_READY = 0;
-//		BPEngenuicsSendData(&u8Test, sizeof(u8Test));
-//		bRXData = 0;
-//	}	
-
-
-
-
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* End of File                                                                                                        */
 /*--------------------------------------------------------------------------------------------------------------------*/

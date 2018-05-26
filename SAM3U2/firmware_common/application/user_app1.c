@@ -72,7 +72,7 @@ static SspConfigurationType* psSpi_Slave_Configuration;
 
 static SspPeripheralType* psSlave_RequestedSsp; 
 static u8 au8RxBuffer[100] ;
-static u8 u8ChessNumber = 0;
+static u8 u8ChessNumber = 0;			//Used to keep the number of chess games//
 static u8* pu8RxNextByte ;
 static u8 au8DebugGrid[][51]=
 {
@@ -131,59 +131,66 @@ Promises:
 */
 void UserApp1Initialize(void)
 {
-  	DebugPrintfGrid();
-  /*	for(u8 i = sizeof(au8DebugGrid) / 51, *pu8Point = au8DebugGrid[0]; i; i--, pu8Point += 51)
-	{
-		DebugPrintf(pu8Point);
-	}*/
-		
-  	AT91C_BASE_PIOB->PIO_PER |= ( PB_23_ANT_MRDY | PB_24_ANT_SRDY );  
-	AT91C_BASE_PIOB->PIO_OER |= ( PB_23_ANT_MRDY | PB_24_ANT_SRDY );
+		DebugPrintfGrid();
+
+//	Set up the GPIO //
+		AT91C_BASE_PIOB->PIO_PER |= ( PB_23_ANT_MRDY | PB_24_ANT_SRDY );  
+		AT91C_BASE_PIOB->PIO_OER |= ( PB_23_ANT_MRDY | PB_24_ANT_SRDY );
+		AT91C_BASE_PIOB->PIO_SODR = PB_23_ANT_MRDY;
+		AT91C_BASE_PIOB->PIO_SODR = PB_24_ANT_SRDY;
+
+//		Configuration the SPI //		
+		Spi_Slave_Configuration.SspPeripheral = USART2;
+		Spi_Slave_Configuration.pCsGpioAddress = AT91C_BASE_PIOB;
+		Spi_Slave_Configuration.u32CsPin = 1<<22;
+		Spi_Slave_Configuration.eBitOrder = 	LSB_FIRST;
+		Spi_Slave_Configuration.eSspMode = SPI_SLAVE_FLOW_CONTROL;
+		Spi_Slave_Configuration.fnSlaveTxFlowCallback = UserApp1SlaveTxFlowCallback;
+		Spi_Slave_Configuration.fnSlaveRxFlowCallback = UserApp1SlaveRxFlowCallback;
+		Spi_Slave_Configuration.pu8RxBufferAddress = au8RxBuffer;
+		Spi_Slave_Configuration.ppu8RxNextByte = &pu8RxNextByte;
+		Spi_Slave_Configuration.u16RxBufferSize = 64;
+
+		psSpi_Slave_Configuration = &Spi_Slave_Configuration;
+		psSlave_RequestedSsp = SspRequest(psSpi_Slave_Configuration);
 	
-  	AT91C_BASE_PIOB->PIO_SODR = PB_23_ANT_MRDY;
-	AT91C_BASE_PIOB->PIO_SODR = PB_24_ANT_SRDY;
-	
-  	Spi_Slave_Configuration.SspPeripheral = USART2;
-	Spi_Slave_Configuration.pCsGpioAddress = AT91C_BASE_PIOB;
-	Spi_Slave_Configuration.u32CsPin = 1<<22;
-	Spi_Slave_Configuration.eBitOrder = 	LSB_FIRST;
-	Spi_Slave_Configuration.eSspMode = SPI_SLAVE_FLOW_CONTROL;
-	Spi_Slave_Configuration.fnSlaveTxFlowCallback = UserApp1SlaveTxFlowCallback;
-	Spi_Slave_Configuration.fnSlaveRxFlowCallback = UserApp1SlaveRxFlowCallback;
-	Spi_Slave_Configuration.pu8RxBufferAddress = au8RxBuffer;
-	Spi_Slave_Configuration.ppu8RxNextByte = &pu8RxNextByte;
-	Spi_Slave_Configuration.u16RxBufferSize = 64;
-	
-	psSpi_Slave_Configuration = &Spi_Slave_Configuration;
-	
-	psSlave_RequestedSsp = SspRequest(psSpi_Slave_Configuration);
-	
-	
-	
-	if(psSlave_RequestedSsp == NULL)
-	{
-	  	LedOn(RED);	
+//		A mark of successful configuration 	//	
+		if(psSlave_RequestedSsp == NULL)
+		{
+			LedOn(RED);	
 			LedOff(GREEN);
-	}
-	else
-	{
-	  	LedOn(GREEN);		
+		}
+		else
+		{
+			LedOn(GREEN);		
 			LedOff(RED);	
-	}
-  /* If good initialization, set state to Idle */
-  if( 1 )
-  {
-    UserApp1_pfStateMachine = UserApp1SM_Idle;
-  }
-  else
-  {
-    /* The task isn't properly initialized, so shut it down and don't run */
-    UserApp1_pfStateMachine = UserApp1SM_Error;
-  }
+		}
+		/* If good initialization, set state to Idle */
+		if( 1 )
+		{
+			UserApp1_pfStateMachine = UserApp1SM_Idle;
+		}
+		else
+		{
+		/* The task isn't properly initialized, so shut it down and don't run */
+			UserApp1_pfStateMachine = UserApp1SM_Error;
+		}
 
 } /* end UserApp1Initialize() */
 
 /*--------------------------------------------------------------------------------------------------------------------*/
+/*!----------------------------------------------------------------------------------------------------------------
+@fn void DebugPrintfGrid(void)
+
+Printed chart
+
+Requires:
+- NONE
+
+Promises:
+- Be able to print forms
+*/
+
 static void DebugPrintfGrid (void)
 {
   	for(u8 i = sizeof(au8DebugGrid) / 51, *pu8Point = au8DebugGrid[0]; i; i--, pu8Point += 51)
@@ -191,7 +198,18 @@ static void DebugPrintfGrid (void)
 		DebugPrintf(pu8Point);
 	}
 }
+/*------------------------------------------------------------------------------------------------------------------------*/
+/*!----------------------------------------------------------------------------------------------------------------
+@fn void UserApp1SlaveTxFlowCallback(void)
 
+A callback function that sends a message
+
+Requires:
+- It is used automatically when sending messages
+
+Promises:
+- Start after sending a message
+*/
 static void UserApp1SlaveTxFlowCallback (void)
 {
 		for(u16 i=0;i<100;i++)
@@ -203,14 +221,26 @@ static void UserApp1SlaveTxFlowCallback (void)
 		
 }
 
+/*!----------------------------------------------------------------------------------------------------------------
+@fn void UserApp1SlaveRxFlowCallback(void)
+
+A callback function that receive a message
+
+Requires:
+- It is used automatically when receive messages
+
+Promises:
+- Start after receive a message
+*/
 static void UserApp1SlaveRxFlowCallback (void)
 {
 	static u8 u8Rx;
 	
+	//Convert incoming information into the correct format//
 	u8Rx = psSlave_RequestedSsp->pBaseAddress->US_RHR;
 	u8Rx = __RBIT(u8Rx)>>24;
-//	u8Rx = AT91C_BASE_US2->US_RHR;
 	
+	//Change the number on the table to O//
 	switch(u8Rx)
 	{
 		case 0x11:
@@ -412,9 +442,10 @@ static void UserApp1SM_Idle(void)
 	static bool bTXReady = FALSE;
 	static bool bGameOver = TRUE;
 	
+	//Change the number on the table to X//
 	if(DebugScanf(au8DebugScanf)!= NULL)
 	{
-	  	AT91C_BASE_PIOB->PIO_SODR = PB_24_ANT_SRDY;
+	  	AT91C_BASE_PIOB->PIO_SODR = PB_24_ANT_SRDY;  //Raise the SRDY if you find a message entered//
 	  	bTXReady = TRUE;
 	  	switch(au8DebugScanf[0])
 			{
@@ -579,26 +610,18 @@ static void UserApp1SM_Idle(void)
 		}		  			
 	}
 	
+	//	Send data to NRF51	//
 	if(bTXReady)
 	{
-		SspWriteByte(psSlave_RequestedSsp,u8TXData);
+		SspWriteByte(psSlave_RequestedSsp,u8TXData); //
 		bTXReady = FALSE;	
 	}
 	
-//	if(AT91C_BASE_PIOB->PIO_ODSR & PB_24_ANT_SRDY == 0)
-//	{
-//		for(u16 i=0;i<100;i++)
-//		{
-//			for(u16 b=0;b<100;b++);
-//		}
-//			if(AT91C_BASE_PIOB->PIO_ODSR & PB_22_ANT_USPI2_CS == 0)
-//			{
-//					AT91C_BASE_PIOB->PIO_SODR = PB_24_ANT_SRDY;
-//			}
-//	}
 	
+	//	Determine the results	//
 	if(bGameOver)
 	{
+		//			X WIN				//
 			if(au8DebugGrid[4][8] == 'X' && au8DebugGrid[4][24] == 'X' && au8DebugGrid[4][40] == 'X')
 			{
 					DebugPrintf("\n\rX WIN");
@@ -655,6 +678,7 @@ static void UserApp1SM_Idle(void)
 					u8ChessNumber = 0;
 			}
 			
+			//			O WIN				//
 			if(au8DebugGrid[4][8] == 'O' && au8DebugGrid[4][24] == 'O' && au8DebugGrid[4][40] == 'O')
 			{
 					DebugPrintf("\n\rO WIN");
@@ -711,6 +735,7 @@ static void UserApp1SM_Idle(void)
 					u8ChessNumber = 0;
 			}
 			
+			//			Draw			//
 			if(u8ChessNumber == 9)
 			{
 					if(au8DebugGrid[4][8] !=  '1' && au8DebugGrid[4][24] != '2' && au8DebugGrid[4][40] != '3' 
@@ -724,6 +749,7 @@ static void UserApp1SM_Idle(void)
 			}
 	}
 	
+	//		Start all over again		//
 	if( WasButtonPressed(BUTTON0) )
 	{
 				ButtonAcknowledge(BUTTON0);
