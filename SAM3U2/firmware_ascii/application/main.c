@@ -66,6 +66,7 @@ void main(void)
   LedInitialize();
   SdCardInitialize();
 
+	INT_CD4515();
   /* Application initialization */
   UserApp1Initialize();
   UserApp2Initialize();

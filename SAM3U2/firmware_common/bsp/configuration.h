@@ -78,6 +78,8 @@ Includes
 #include "sam3u_uart.h"
 #include "adc12.h"
 
+#include "CD4515BM.h"
+
 /* EIEF1-PCB-01 specific header files */
 #ifdef EIE1
 #include "eief1-pcb-01.h"
