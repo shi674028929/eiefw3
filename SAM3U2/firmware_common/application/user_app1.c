@@ -92,6 +92,7 @@ Promises:
 */
 void UserApp1Initialize(void)
 {
+		AT91C_BASE_PIOB->PIO_SODR = PB_24_ANT_SRDY;
   /* If good initialization, set state to Idle */
   if( 1 )
   {
