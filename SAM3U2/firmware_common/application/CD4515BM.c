@@ -16,6 +16,12 @@ extern volatile u32 G_u32SystemTime1s;                    /*!< @brief From main.
 extern volatile u32 G_u32SystemFlags;                     /*!< @brief From main.c */
 extern volatile u32 G_u32ApplicationFlags;                /*!< @brief From main.c */
 
+extern volatile u16 u16Led_Data[16][10];
+
+static u8 u8LoopTime = 16;
+static u8 u8SandData = 0;
+
+
 void INT_CD4515(void)
 {
 		AT91C_BASE_PIOA->PIO_PER = (CD4515_A | CD4515_B | CD4515_C | CD4515_D | CD4515_INH | CD4515_STB );
@@ -25,18 +31,66 @@ void INT_CD4515(void)
 		AT91C_BASE_PIOA->PIO_SODR = CD4515_INH;
 }
 
-static void Delay(u8 u8DelayTime)
+void INT_MBI5026(void)
 {
-  	for(u8 u8a = 0 ; u8a <u8DelayTime ; u8a++ )
-	{	  	
-	}
+		AT91C_BASE_PIOA->PIO_PER = (MBI5026_CLK | MBI5026_SDI | MBI5026_LE | MBI5026_OE );
+		AT91C_BASE_PIOA->PIO_OER = (MBI5026_CLK | MBI5026_SDI | MBI5026_LE | MBI5026_OE );
+		
+		AT91C_BASE_PIOA->PIO_CODR = MBI5026_CLK;
+		AT91C_BASE_PIOA->PIO_CODR = MBI5026_SDI;
+		AT91C_BASE_PIOA->PIO_CODR = MBI5026_LE;
+		AT91C_BASE_PIOA->PIO_SODR = MBI5026_OE;
 }
 
-static void CD4515_OUT_Port(u8 u8Selected)
+
+
+static void Delay(u8 u8DelayTime)
+{
+		for(u8 u8a = 0 ; u8a <u8DelayTime ; u8a++ )
+		{	  	
+		}
+}
+
+
+ void Spi_Sand_Data(u8 u8Column_data)
+{
+	 static u8 u8i;
+	 static u8 u8j;
+	 static u8 u8data;
+	 
+	 for(u8i = 79; u8i>=0 ; u8i --)
+	 {
+		 	u8data = u16Led_Data[u8Column_data][u8i];
+			
+			for(u8j = 0; u8j <16; u8j++)
+			{
+					AT91C_BASE_PIOA->PIO_CODR = MBI5026_CLK;
+					
+				  if(0x01 & u8data)
+				  {
+						  AT91C_BASE_PIOA->PIO_SODR = MBI5026_SDI;
+				  }
+					else
+					{
+							AT91C_BASE_PIOA->PIO_CODR = MBI5026_SDI;
+					}
+					
+					Delay(5);					
+					AT91C_BASE_PIOA->PIO_SODR = MBI5026_CLK;
+					
+					Delay(5);	
+					u8data= u8data>>1;
+			}
+	 }		
+}
+
+
+void CD4515_OUT_Port(u8 u8LineSelected )
 {
 		AT91C_BASE_PIOA->PIO_SODR = CD4515_STB;
-		
-		switch(u8Selected)
+		AT91C_BASE_PIOA->PIO_SODR = CD4515_INH;
+
+		switch(u8LineSelected)
 		{
 			case 0:
 			{
@@ -166,5 +220,29 @@ static void CD4515_OUT_Port(u8 u8Selected)
 					AT91C_BASE_PIOA->PIO_SODR = CD4515_D;		
 					break;
 			}			
+		}
+
+		AT91C_BASE_PIOA->PIO_CODR = CD4515_INH;
+	
+}
+
+void LED_OPEN(void )
+{
+		static u8 u8i;
+		for(u8i=0 ; u8i<16 ; u8i++)
+		{
+				Spi_Sand_Data(u8i);
+				AT91C_BASE_PIOA->PIO_SODR = MBI5026_OE;
+				Delay(5);	
+				
+				AT91C_BASE_PIOA->PIO_SODR = MBI5026_LE;
+				Delay(5);	
+				
+				AT91C_BASE_PIOA->PIO_CODR = MBI5026_LE;
+				Delay(5);	
+				
+				CD4515_OUT_Port(u8i);
+				AT91C_BASE_PIOA->PIO_CODR = MBI5026_OE;
+				Delay(5);	
 		}
 }
