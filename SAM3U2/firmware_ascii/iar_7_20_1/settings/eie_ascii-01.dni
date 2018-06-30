@@ -9,7 +9,7 @@ TriggerName=main
 LimitSize=0
 ByteLimit=50
 [DebugChecksum]
-Checksum=-104901147
+Checksum=-1673593974
 [Exceptions]
 StopOnUncaught=_ 0
 StopOnThrow=_ 0
@@ -24,6 +24,11 @@ CStepIntDis=_ 0
 TraceBufferSize=0x00010000
 TraceStallIfFIFOFull=0x00000000
 TracePortSize=0x00000000
+[watch_formats]
+Fmt0={W}3:u16data	4	0
+Fmt1={W}3:u8data	4	0
+Fmt2={W}3:u8i	3	0
+Fmt3={W}3:u8j	3	0
 [Log file]
 LoggingEnabled=_ 0
 LogFile=_ ""
@@ -42,7 +47,8 @@ Exclusions=
 [Disassemble mode]
 mode=0
 [Breakpoints2]
-Count=0
+Bp0=_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\..\firmware_common\application\CD4515BM.c}.63.5" 0 0 1 "" 0 "" 0
+Count=1
 [Aliases]
 Count=0
 SuppressDialog=0

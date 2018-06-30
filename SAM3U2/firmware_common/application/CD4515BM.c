@@ -52,21 +52,21 @@ static void Delay(u8 u8DelayTime)
 }
 
 
- void Spi_Sand_Data(u8 u8Column_data)
+ static void Spi_Sand_Data(u8 u8Column_data)
 {
-	 static u8 u8i;
-	 static u8 u8j;
-	 static u8 u8data;
+	 static u8 u8i=0;
+	 static u8 u8j=0;
+	 static u8 u16data;
 	 
-	 for(u8i = 79; u8i>=0 ; u8i --)
+	 for(u8i = 10; u8i>=1 ; u8i--)
 	 {
-		 	u8data = u16Led_Data[u8Column_data][u8i];
+		 	u16data = u16Led_Data[u8Column_data][u8i-1];
 			
-			for(u8j = 0; u8j <16; u8j++)
+			for(u8j = 0; u8j <8; u8j++)
 			{
 					AT91C_BASE_PIOA->PIO_CODR = MBI5026_CLK;
 					
-				  if(0x01 & u8data)
+				  if(0x01 & u16data)
 				  {
 						  AT91C_BASE_PIOA->PIO_SODR = MBI5026_SDI;
 				  }
@@ -79,13 +79,13 @@ static void Delay(u8 u8DelayTime)
 					AT91C_BASE_PIOA->PIO_SODR = MBI5026_CLK;
 					
 					Delay(5);	
-					u8data= u8data>>1;
+					u16data= u16data>>1;
 			}
-	 }		
+	 }
 }
 
 
-void CD4515_OUT_Port(u8 u8LineSelected )
+static void CD4515_OUT_Port(u8 u8LineSelected )
 {
 		AT91C_BASE_PIOA->PIO_SODR = CD4515_STB;
 		AT91C_BASE_PIOA->PIO_SODR = CD4515_INH;

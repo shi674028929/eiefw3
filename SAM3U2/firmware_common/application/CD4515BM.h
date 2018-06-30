@@ -50,8 +50,8 @@ State Machine Declarations
 ***********************************************************************************************************************/
 
  void Delay(u8);
- void CD4515_OUT_Port(u8);
- void Spi_Sand_Data(u8);
+static void CD4515_OUT_Port(u8);
+static void Spi_Sand_Data(u8);
  void LED_OPEN(void);
 /**********************************************************************************************************************
 Constants / Definitions
